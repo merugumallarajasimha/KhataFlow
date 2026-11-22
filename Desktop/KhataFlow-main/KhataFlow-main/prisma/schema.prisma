@@ -1,0 +1,116 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Shop {
+  id           Int     @id @default(autoincrement())
+  name         String
+  ownerName    String
+  upiId        String
+  phone        String  @default("")
+  email        String  @default("")
+  address      String  @default("")
+  gstin        String?
+  paymentTerms Int     @default(15)
+}
+
+model Customer {
+  id             Int      @id @default(autoincrement())
+  name           String
+  whatsappNumber String
+  email          String?
+  address        String?
+  createdAt      DateTime @default(now())
+  bills          Bill[]
+}
+
+model Bill {
+  id           Int           @id @default(autoincrement())
+  billNumber   String        @unique
+  customerId   Int
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  itemsNote    String?
+  totalAmount  Int
+  billDate     DateTime
+  dueDate      DateTime
+  createdAt    DateTime      @default(now())
+  status       String        @default("SENT")
+  termsDays    Int           @default(15)
+  subtotal     Int           @default(0)
+  discount     Int           @default(0)
+  notes        String?
+  sentAt       DateTime?
+  shareToken   String?       @unique
+  promisedDate DateTime?
+  payments     Payment[]
+  reminders    ReminderLog[]
+  items        BillItem[]
+  activities   ActivityLog[]
+}
+
+model BillItem {
+  id          Int    @id @default(autoincrement())
+  billId      Int
+  bill        Bill   @relation(fields: [billId], references: [id], onDelete: Cascade)
+  description String
+  qty         Int
+  unitPrice   Int
+  amount      Int
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  billId    Int
+  bill      Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  amount    Int
+  method    String
+  reference String?
+  paidOn    DateTime
+  createdAt DateTime @default(now())
+}
+
+model ReminderLog {
+  id      Int      @id @default(autoincrement())
+  billId  Int
+  bill    Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  tone    String
+  channel String   @default("WHATSAPP")
+  message String
+  sentAt  DateTime @default(now())
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  billId    Int
+  bill      Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  type      String
+  detail    String
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id        Int       @id @default(autoincrement())
+  title     String
+  category  String
+  amount    Int
+  dueDate   DateTime
+  paidOn    DateTime?
+  recurring String?
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String
+  nameHi       String?
+  category     String
+  unit         String
+  pricePerUnit Int
+  createdAt    DateTime @default(now())
+}
